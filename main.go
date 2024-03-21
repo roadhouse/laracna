@@ -28,7 +28,7 @@ func fetchPageContent(url string) (*goquery.Document, error) {
   return content, nil
 }
 
-func fetchDeckUrl(i int, doc *goquery.Selection) string {
+func fetchLink(i int, doc *goquery.Selection) string {
   href, _ := doc.Attr("href")
 
   return href
@@ -38,22 +38,27 @@ func fetchDeckList(i int, s *goquery.Selection) string {
     return strings.TrimSpace(s.Text())
 }
 
-func main() {
-  // ------------------- List decks urls
+func fetchDeckUrls()  {
+  xpath := "div.decks div div table tbody tr td a"
   doc, err := fetchPageContent("index-deck-list.html")
-  if err != nil {
-    log.Fatal(err)
-  }
-  xpath := "div.decks div div table tbody a"
-  deckList := doc.Find(xpath).Map(fetchDeckUrl)
-  fmt.Println(deckList)
 
-  // ------------------- Parsing deck 
-  doc, err = fetchPageContent("deck-page.html")
   if err != nil {
     log.Fatal(err)
   }
-  xpath = "div.wholeDeck td.number"
+
+  deckList := doc.Find(xpath).Map(fetchLink)
+
+  fmt.Println(deckList)
+}
+
+func fetchDeckData()  {
+  xpath := "div.wholeDeck td.number"
+  doc, err := fetchPageContent("deck-page.html")
+
+  if err != nil {
+    log.Fatal(err)
+  }
+
   j := doc.Find(xpath).Map(fetchDeckList)
   myMap := make(map[string]int)
   for _, line := range j {
@@ -61,5 +66,25 @@ func main() {
     quantity, _ := strconv.Atoi(o[0])
     myMap[strings.TrimSpace(o[1])] = quantity
   }
+
   fmt.Println(myMap)
+}
+
+func fetchOtherIndexLinks() {
+  xpath := "ul.pagination li a"
+  doc, err := fetchPageContent("index-deck-list.html")
+
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  indexesList := doc.Find(xpath).Map(fetchLink)
+
+  fmt.Println(indexesList)
+}
+
+func main() {
+  fetchOtherIndexLinks()
+  fetchDeckUrls()
+  fetchDeckData()
 }
