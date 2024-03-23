@@ -58,6 +58,23 @@ func fetchDeckData(doc *goquery.Document) {
   fmt.Println(myMap)
 }
 
+func fetchSideboarData(doc *goquery.Document) {
+  myMap := make(map[string]int)
+  sideBoardPath := "div.wholeDeck div.row div:last-child .Sideboard"
+  hasSideboard := doc.Find(sideBoardPath).Length() != 0
+  if hasSideboard {
+    xpath := "div.wholeDeck div.row div:last-child td.number"
+    j := doc.Find(xpath).Map(fetchDeckList)
+    for _, line := range j {
+      o := strings.Split(line, "\n")
+      quantity, _ := strconv.Atoi(o[0])
+      myMap[strings.TrimSpace(o[1])] = quantity
+    }
+  }
+
+  fmt.Println(myMap)
+}
+
 func fetchOtherIndexLinks(doc *goquery.Document) {
   xpath := "ul.pagination li a"
   indexesList := doc.Find(xpath).Map(fetchLink)
@@ -65,21 +82,31 @@ func fetchOtherIndexLinks(doc *goquery.Document) {
   fmt.Println(indexesList)
 }
 
-func main() {
-  // fetch deck links and other pages
-  indexPage, err := fetchPageContent("index-deck-list.html")
+func fetchIndexPageData(url string) {
+  indexPage, err := fetchPageContent(url)
   if err != nil {
     log.Fatal(err)
   }
 
+  fmt.Println("Links")
   fetchOtherIndexLinks(indexPage)
   fetchDeckUrls(indexPage)
+}
 
-  // parsing deck data from deck page
-  deckPage, err := fetchPageContent("deck-page.html")
+func fetchDeckPageData(url string) {
+  deckPage, err := fetchPageContent(url)
   if err != nil {
     log.Fatal(err)
   }
 
+  fmt.Println("Deck")
   fetchDeckData(deckPage)
+  fmt.Println("Sideboard")
+  fetchSideboarData(deckPage)
+}
+
+func main() {
+  fetchIndexPageData("index-deck-list.html")
+  fetchDeckPageData("deck-page.html")
+  fetchDeckPageData("deck-with-side.html")
 }
