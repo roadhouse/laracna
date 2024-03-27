@@ -1,0 +1,6 @@
+[mtgdecks]
+url = "https://mtgdecks.com"
+deck_path = "div.decks div div table tbody tr td a"
+deck_data_path = "div.wholeDeck td.number"
+side_board_path = "div.wholeDeck div.row div:last-child .Sideboard"
+other_indexes_path = "ul.pagination li a"
