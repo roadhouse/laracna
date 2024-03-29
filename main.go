@@ -2,11 +2,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/PuerkitoBio/goquery"
@@ -20,13 +17,6 @@ type Config struct {
 	SideBoardPath     string `toml:"side_board_path"`
 	SideBoardDataPath string `toml:"side_board_data_path"`
 	OtherIndexPath    string `toml:"other_indexes_path"`
-}
-
-type Scraper struct {
-	config Config
-	name   string
-	doc    goquery.Document
-	url    string
 }
 
 func loadConfig(filePath string) (map[string]Config, error) {
@@ -55,68 +45,6 @@ func fetchPageContent(url string) (*goquery.Document, error) {
 	}
 
 	return content, nil
-}
-
-func fetchLink(i int, doc *goquery.Selection) string {
-	_ = i
-	href, _ := doc.Attr("href")
-
-	return href
-}
-
-func fetchDeckList(i int, s *goquery.Selection) string {
-	_ = i
-	return strings.TrimSpace(s.Text())
-}
-
-func (scraper *Scraper) fetchDeckUrls() {
-	deckList := scraper.doc.Find(scraper.config.DeckPath).Map(fetchLink)
-
-	fmt.Println(deckList)
-}
-
-func (scraper *Scraper) quantityAndCardName(entries []string) map[string]int {
-	myMap := make(map[string]int)
-	for _, line := range entries {
-		o := strings.Split(line, "\n")
-		quantity, _ := strconv.Atoi(o[0])
-		myMap[strings.TrimSpace(o[1])] = quantity
-	}
-	return myMap
-}
-
-func (scraper *Scraper) fetchDeckData() {
-	j := scraper.doc.Find(scraper.config.DeckDataPath).Map(fetchDeckList)
-	myMap := scraper.quantityAndCardName(j)
-	fmt.Println(myMap)
-}
-
-func (scraper *Scraper) fetchSideboarData() {
-	myMap := make(map[string]int)
-	hasSideboard := scraper.doc.Find(scraper.config.SideBoardPath).Length() != 0
-	if hasSideboard {
-		j := scraper.doc.Find(scraper.config.SideBoardDataPath).Map(fetchDeckList)
-		myMap = scraper.quantityAndCardName(j)
-	}
-	fmt.Println(myMap)
-}
-
-func (scraper *Scraper) fetchOtherIndexLinks() {
-	indexesList := scraper.doc.Find(scraper.config.OtherIndexPath).Map(fetchLink)
-
-	fmt.Println(indexesList)
-}
-
-func (scraper *Scraper) fetchIndexPageData() {
-	scraper.fetchOtherIndexLinks()
-	scraper.fetchDeckUrls()
-}
-
-func (scraper *Scraper) fetchDeckPageData() {
-	fmt.Println("Deck")
-	scraper.fetchDeckData()
-	fmt.Println("Sideboard")
-	scraper.fetchSideboarData()
 }
 
 func main() {
