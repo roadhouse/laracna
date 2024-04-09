@@ -17,8 +17,8 @@ type Scraper struct {
 	url    string
 }
 
-func (scraper *Scraper) loadDocument(url string) (Scraper, error) {
-	doc, err := os.Open(url)
+func (scraper *Scraper) loadDocument() (Scraper, error) {
+	doc, err := os.Open(scraper.url)
 	// doc, err := goquery.NewDocument(url)
 	if err != nil {
 		log.Fatal("Error opening file:", err)

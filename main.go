@@ -6,22 +6,26 @@ import (
 )
 
 func main() {
-	config, err := new(Config).loadConfig("mtgdecks")
+	siteName := "mtgdecks"
+	config, err := new(Config).loadConfig(siteName)
 	if err != nil {
 		log.Fatalf("Error reading config file: %s", err)
 	}
 
 	scraper := Scraper{
 		config: config,
-		name:   "mtgdecks",
+		name:   siteName,
 	}
 
-	scraper.loadDocument("index-deck-list.html")
+	scraper.url = "index-deck-list.html"
+	scraper.loadDocument()
 	scraper.fetchIndexPageData()
 
-	scraper.loadDocument("deck-page.html")
+	scraper.url = "deck-page.html"
+	scraper.loadDocument()
 	scraper.fetchDeckPageData()
 
-	scraper.loadDocument("deck-with-side.html")
+	scraper.url = "deck-with-side.html"
+	scraper.loadDocument()
 	scraper.fetchDeckPageData()
 }
