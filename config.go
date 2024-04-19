@@ -14,6 +14,7 @@ type Config struct {
 	SideBoardPath     string `toml:"side_board_path"`
 	SideBoardDataPath string `toml:"side_board_data_path"`
 	OtherIndexPath    string `toml:"other_indexes_path"`
+	DeckNamePath      string `toml:"deck_name_path"`
 }
 
 func (c *Config) loadConfigFile(filePath string) (map[string]Config, error) {

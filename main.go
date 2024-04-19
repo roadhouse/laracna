@@ -1,31 +1,23 @@
-// crawler from mtg decks
+// crawler from mtgdecks.com
 package main
 
 import (
+	"fmt"
 	"log"
 )
 
 func main() {
-	siteName := "mtgdecks"
-	config, err := new(Config).loadConfig(siteName)
+	scraper, err := new(Scraper).LoadScraper("mtgdecks")
 	if err != nil {
-		log.Fatalf("Error reading config file: %s", err)
+		log.Fatalf("Error loading scraper: %s", err)
 	}
 
-	scraper := Scraper{
-		config: config,
-		name:   siteName,
-	}
+	index := scraper.ExtractIndexPageData("index-deck-list.html")
+	fmt.Printf("index page data: %+v\n\n", index)
 
-	scraper.url = "index-deck-list.html"
-	scraper.loadDocument()
-	scraper.fetchIndexPageData()
+	deck := scraper.ExtractDeckInfo("deck-with-side.html")
+	fmt.Printf("deck with sideboard: %+v\n\n", deck)
 
-	scraper.url = "deck-page.html"
-	scraper.loadDocument()
-	scraper.fetchDeckPageData()
-
-	scraper.url = "deck-with-side.html"
-	scraper.loadDocument()
-	scraper.fetchDeckPageData()
+	deck = scraper.ExtractDeckInfo("deck-page.html")
+	fmt.Printf("deck without sideboard: %+v\n\n", deck)
 }

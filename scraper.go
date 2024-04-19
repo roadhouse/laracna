@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -9,6 +8,17 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+type IndexPage struct {
+	OtherIndexes []string
+	DeckUrls     []string
+}
+
+type Deck struct {
+	DeckName  string
+	Main      map[string]int
+	Sideboard map[string]int
+}
 
 type Scraper struct {
 	config Config
@@ -37,10 +47,8 @@ func (scraper *Scraper) loadDocument() (Scraper, error) {
 	return *scraper, nil
 }
 
-func (scraper *Scraper) fetchDeckUrls() {
-	deckList := scraper.doc.Find(scraper.config.DeckPath).Map(scraper.fetchLink)
-
-	fmt.Println(deckList)
+func (scraper *Scraper) fetchDeckUrls() []string {
+	return scraper.doc.Find(scraper.config.DeckPath).Map(scraper.fetchLink)
 }
 
 func (scraper *Scraper) quantityAndCardName(entries []string) map[string]int {
@@ -53,38 +61,34 @@ func (scraper *Scraper) quantityAndCardName(entries []string) map[string]int {
 	return myMap
 }
 
-func (scraper *Scraper) fetchDeckData() {
+func (scraper *Scraper) fetchDeckData() map[string]int {
 	j := scraper.doc.Find(scraper.config.DeckDataPath).Map(scraper.fetchDeckList)
 	myMap := scraper.quantityAndCardName(j)
-	fmt.Println(myMap)
+	return myMap
 }
 
-func (scraper *Scraper) fetchSideboarData() {
+func (scraper *Scraper) fetchSideboarData() map[string]int {
 	myMap := make(map[string]int)
 	hasSideboard := scraper.doc.Find(scraper.config.SideBoardPath).Length() != 0
 	if hasSideboard {
 		j := scraper.doc.Find(scraper.config.SideBoardDataPath).Map(scraper.fetchDeckList)
 		myMap = scraper.quantityAndCardName(j)
 	}
-	fmt.Println(myMap)
+	return myMap
 }
 
-func (scraper *Scraper) fetchOtherIndexLinks() {
-	indexesList := scraper.doc.Find(scraper.config.OtherIndexPath).Map(scraper.fetchLink)
-
-	fmt.Println(indexesList)
+func (scraper *Scraper) fetchOtherIndexLinks() []string {
+	return scraper.doc.Find(scraper.config.OtherIndexPath).Map(scraper.fetchLink)
 }
 
-func (scraper *Scraper) fetchIndexPageData() {
-	scraper.fetchOtherIndexLinks()
-	scraper.fetchDeckUrls()
-}
+func (scraper *Scraper) ExtractIndexPageData(url string) IndexPage {
+	scraper.url = url
+	scraper.loadDocument()
 
-func (scraper *Scraper) fetchDeckPageData() {
-	fmt.Println("Deck")
-	scraper.fetchDeckData()
-	fmt.Println("Sideboard")
-	scraper.fetchSideboarData()
+	return IndexPage{
+		OtherIndexes: scraper.fetchOtherIndexLinks(),
+		DeckUrls:     scraper.fetchDeckUrls(),
+	}
 }
 
 func (scraper *Scraper) fetchLink(i int, doc *goquery.Selection) string {
@@ -97,4 +101,32 @@ func (scraper *Scraper) fetchLink(i int, doc *goquery.Selection) string {
 func (scraper *Scraper) fetchDeckList(i int, s *goquery.Selection) string {
 	_ = i
 	return strings.TrimSpace(s.Text())
+}
+
+func (scraper *Scraper) fetchDeckName() string {
+	return scraper.doc.Find(scraper.config.DeckNamePath).Text()
+}
+
+func (scraper *Scraper) ExtractDeckInfo(url string) Deck {
+	scraper.url = url
+	scraper.loadDocument()
+
+	return Deck{
+		DeckName:  scraper.fetchDeckName(),
+		Main:      scraper.fetchDeckData(),
+		Sideboard: scraper.fetchSideboarData(),
+	}
+}
+
+func (scraper *Scraper) LoadScraper(configName string) (Scraper, error) {
+	config, err := new(Config).loadConfig(configName)
+	if err != nil {
+		log.Fatalf("Error reading config file: %s", err)
+		return Scraper{}, err
+	}
+
+	return Scraper{
+		config: config,
+		name:   configName,
+	}, nil
 }
